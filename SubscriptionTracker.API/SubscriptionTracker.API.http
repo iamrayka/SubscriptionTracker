@@ -1,6 +1,6 @@
 @SubscriptionTracker.API_HostAddress = http://localhost:5010
 
-GET {{SubscriptionTracker.API_HostAddress}}/weatherforecast/
+GET {{SubscriptionTracker.API_HostAddress}}/
 Accept: application/json
 
 ###
