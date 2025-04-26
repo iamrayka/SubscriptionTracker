@@ -1,4 +1,4 @@
-# subscription-bill-tracker
+# SubscriptionTracker
 A web-based application to track subscriptions, detect recurring payments, and provide spending insights.
 
 ## Features
