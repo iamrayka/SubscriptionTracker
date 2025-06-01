@@ -1,4 +1,4 @@
-# ⚡ MVP [It has now been added directly to the project as well]
+# ⚡ MVP 
 
 # AI-Powered Subscription & Bill Tracker
 
