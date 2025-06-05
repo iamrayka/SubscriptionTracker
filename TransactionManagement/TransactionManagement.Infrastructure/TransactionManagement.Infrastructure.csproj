@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TransactionManagement.Core\TransactionManagement.Core.csproj" />
+  </ItemGroup>
+
 </Project>
