@@ -1,4 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Shared.Mediator;
+using SubscriptionTracker.Shared.Results;
+using TransactionManagement.Core.Transactions;
 using TransactionManagement.Core.Transactions.CreateTransaction;
 using TransactionManagement.Core.Transactions.DeleteTransaction;
 using TransactionManagement.Core.Transactions.GetTransaction;
@@ -10,57 +13,70 @@ namespace TransactionManagement.API.Controllers
     [Route("api/[controller]")]
     public class TransactionsController : ControllerBase
     {
-        private readonly CreateTransactionHandler _createHandler;
-        private readonly GetTransactionsByUserHandler _getHandler;
-        private readonly UpdateTransactionHandler _updateHandler;
-        private readonly DeleteTransactionHandler _deleteHandler;
+        private readonly IMediator _mediator;
 
-        public TransactionsController(CreateTransactionHandler createHandler,
-                                      GetTransactionsByUserHandler getHandler,
-                                      UpdateTransactionHandler updateHandler,
-                                      DeleteTransactionHandler deleteHandler)
-
+        public TransactionsController(IMediator mediator)
         {
-            _createHandler = createHandler;
-            _getHandler = getHandler;
-            _updateHandler = updateHandler;
-            _deleteHandler = deleteHandler;
+            _mediator = mediator;
         }
 
+        /// <summary>
+        /// Creates a new transaction.
+        /// </summary>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateTransactionRequest request)
+        public async Task<IActionResult> Create([FromBody] CreateTransactionCommand command)
         {
-            var transaction = await _createHandler.HandleAsync(
-                request.UserId,
-                request.TransactionDate,
-                request.Description,
-                request.Amount
-            );
+            var result = await _mediator.SendAsync(command);
 
-            return Ok(transaction);
+            if (result.IsFailure)
+                return BadRequest(result.Error);
+
+            return Ok(result.Value);
         }
+
+        /// <summary>
+        /// Retrieves all transactions for a specific user.
+        /// </summary>
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetByUserId(Guid userId)
         {
-            var transactions = await _getHandler.HandleAsync(userId);
-            return Ok(transactions);
+            var result = await _mediator.SendAsync(new GetTransactionsByUserQuery { UserId = userId });
+
+            if (result.IsFailure)
+                return BadRequest(result.Error);
+
+            return Ok(result.Value);
         }
 
+        /// <summary>
+        /// Updates an existing transaction.
+        /// </summary>
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTransactionRequest request)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTransactionCommand command)
         {
-            var transaction = await _updateHandler.HandleAsync(id, request);
-            if (transaction == null) return NotFound();
-            return Ok(transaction);
+            if (id != command.Id)
+                return BadRequest("ID mismatch between route and body.");
+
+            var result = await _mediator.SendAsync(command);
+
+            if (result.IsFailure)
+                return NotFound(result.Error);
+
+            return Ok(result.Value);
         }
 
+        /// <summary>
+        /// Deletes a transaction by ID.
+        /// </summary>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var success = await _deleteHandler.HandleAsync(id);
-            if (!success) return NotFound();
+            var result = await _mediator.SendAsync(new DeleteTransactionCommand { Id = id });
+
+            if (result.IsFailure)
+                return NotFound(result.Error);
+
             return NoContent();
         }
-
     }
 }

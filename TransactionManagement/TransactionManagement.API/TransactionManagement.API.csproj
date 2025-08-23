@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Shared\SubscriptionTracker.Shared.csproj" />
     <ProjectReference Include="..\TransactionManagement.Core\TransactionManagement.Core.csproj" />
     <ProjectReference Include="..\TransactionManagement.Infrastructure\TransactionManagement.Infrastructure.csproj" />
   </ItemGroup>
