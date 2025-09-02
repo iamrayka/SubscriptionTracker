@@ -21,6 +21,9 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
     /// </summary>
     public async Task<Result<Transaction>> HandleAsync(CreateTransactionCommand request)
     {
+        if (request.UserId == Guid.Empty)
+            return Result<Transaction>.Failure("User ID cannot be empty.");
+
         try
         {
             var transaction = new Transaction(
@@ -35,10 +38,12 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         }
         catch (ArgumentException ex)
         {
-            return Result<Transaction>.Failure(ex.Message); // Known validation error
+            Console.Error.WriteLine(ex); // Or use ILogger if available
+            return Result<Transaction>.Failure("Invalid input provided.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.Error.WriteLine(ex); // internal only
             return Result<Transaction>.Failure("Unexpected error while creating transaction.");
         }
     }

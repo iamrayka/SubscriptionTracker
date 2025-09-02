@@ -113,4 +113,37 @@ public class UpdateTransactionCommandHandlerTests
         result.Error.Should().Contain("not found", "the error message should clearly indicate the cause");
         repoMock.Verify(r => r.UpdateAsync(It.IsAny<Transaction>()), Times.Never, "update should not be attempted on null");
     }
+
+    /// <summary>
+    /// Test: If the repository throws an exception during update, the handler should catch it
+    /// and return a failure result with a generic error message.
+    /// </summary>
+    [Fact]
+    public async Task HandleAsync_ShouldReturnFailure_WhenRepositoryThrowsException()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var transaction = new Transaction(id, DateTime.Today, "Desc", 50);
+
+        var repoMock = new Mock<ITransactionRepository>();
+        repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(transaction);
+        repoMock.Setup(r => r.UpdateAsync(It.IsAny<Transaction>())).ThrowsAsync(new Exception("DB failed"));
+
+        var handler = new UpdateTransactionCommandHandler(repoMock.Object);
+
+        var command = new UpdateTransactionCommand
+        {
+            Id = id,
+            TransactionDate = DateTime.Today,
+            Description = "Updated",
+            Amount = 75
+        };
+
+        // Act
+        var result = await handler.HandleAsync(command);
+
+        // Assert
+        result.IsFailure.Should().BeTrue("exceptions should be caught and converted to a failure");
+        result.Error.Should().Be("An unexpected error occurred while updating the transaction.");
+    }
 }

@@ -65,4 +65,27 @@ public class GetTransactionsByUserQueryHandlerTests
         result.IsFailure.Should().BeTrue("an empty user ID is invalid and should not be processed");
         result.Error.Should().Contain("User ID", "the error should indicate that the user ID is required");
     }
+
+    /// <summary>
+    /// Test: If the repository throws an exception, handler should return a generic failure.
+    /// </summary>
+    [Fact]
+    public async Task HandleAsync_ShouldReturnFailure_WhenRepositoryThrowsException()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var repoMock = new Mock<ITransactionRepository>();
+        repoMock.Setup(r => r.GetByUserIdAsync(userId))
+                .ThrowsAsync(new Exception("DB error"));
+
+        var handler = new GetTransactionsByUserQueryHandler(repoMock.Object);
+        var query = new GetTransactionsByUserQuery { UserId = userId };
+
+        // Act
+        var result = await handler.HandleAsync(query);
+
+        // Assert
+        result.IsFailure.Should().BeTrue("unexpected exceptions should result in a failure");
+        result.Error.Should().Be("An error occurred while retrieving transactions.");
+    }
 }

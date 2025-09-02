@@ -26,8 +26,17 @@ public class GetTransactionsByUserQueryHandler : IRequestHandler<GetTransactions
         if (request.UserId == Guid.Empty)
             return Result<IEnumerable<Transaction>>.Failure("User ID cannot be empty.");
 
-        var transactions = await _repository.GetByUserIdAsync(request.UserId);
+        try
+        {
+            var transactions = await _repository.GetByUserIdAsync(request.UserId);
+            return Result<IEnumerable<Transaction>>.Success(transactions);
+        }
+        catch (Exception ex)
+        {
+            // Log the exception internally (ILogger or Console in simple cases)
+            Console.Error.WriteLine(ex); // Should be replaced with logger later 
 
-        return Result<IEnumerable<Transaction>>.Success(transactions);
+            return Result<IEnumerable<Transaction>>.Failure("An error occurred while retrieving transactions.");
+        }
     }
 }

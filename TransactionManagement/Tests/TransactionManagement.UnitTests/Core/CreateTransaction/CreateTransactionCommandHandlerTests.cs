@@ -71,6 +71,34 @@ public class CreateTransactionCommandHandlerTests
         // Assert: Verify failure and error message
         result.IsFailure.Should().BeTrue("empty description is invalid and should result in failure");
         result.Error.Should().NotBeNullOrWhiteSpace("an appropriate error message should be returned");
-        result.Error!.ToLower().Should().Contain("description", "the error should mention the description field");
+        result.Error.Should().Be("Invalid input provided.", "a generic failure message should be returned for invalid input");
+    }
+
+    /// <summary>
+    /// Test: Handler should return a failure result when UserId is empty.
+    /// This verifies input validation for required UserId.
+    /// </summary>
+    [Fact]
+    public async Task HandleAsync_ShouldReturnFailure_WhenUserIdIsEmpty()
+    {
+        // Arrange
+        var repoMock = new Mock<ITransactionRepository>();
+        var handler = new CreateTransactionCommandHandler(repoMock.Object);
+
+        var command = new CreateTransactionCommand
+        {
+            UserId = Guid.Empty, // Invalid
+            TransactionDate = DateTime.Today,
+            Description = "Test",
+            Amount = 100
+        };
+
+        // Act
+        var result = await handler.HandleAsync(command);
+
+        // Assert
+        result.IsFailure.Should().BeTrue("an empty UserId is invalid and should fail");
+        result.Error.Should().Contain("User ID", "the error should clearly indicate the invalid field");
+        repoMock.Verify(r => r.CreateAsync(It.IsAny<Transaction>()), Times.Never, "the repository should not be called on invalid input");
     }
 }

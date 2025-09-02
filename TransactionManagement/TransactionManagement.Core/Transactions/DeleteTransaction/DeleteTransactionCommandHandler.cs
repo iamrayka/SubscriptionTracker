@@ -22,11 +22,22 @@ public class DeleteTransactionCommandHandler : IRequestHandler<DeleteTransaction
     /// <returns>A Result indicating success or failure.</returns>
     public async Task<Result> HandleAsync(DeleteTransactionCommand request)
     {
-        var transaction = await _repository.GetByIdAsync(request.Id);
-        if (transaction == null)
-            return Result.Failure($"Transaction with ID '{request.Id}' was not found.");
+        if (request.Id == Guid.Empty)
+            return Result.Failure("Transaction ID cannot be empty.");
 
-        await _repository.DeleteAsync(request.Id);
-        return Result.Success();
+        try
+        {
+            var transaction = await _repository.GetByIdAsync(request.Id);
+            if (transaction == null)
+                return Result.Failure($"Transaction with ID '{request.Id}' was not found.");
+
+            await _repository.DeleteAsync(request.Id);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex); // or use ILogger
+            return Result.Failure("An unexpected error occurred while deleting the transaction.");
+        }
     }
 }

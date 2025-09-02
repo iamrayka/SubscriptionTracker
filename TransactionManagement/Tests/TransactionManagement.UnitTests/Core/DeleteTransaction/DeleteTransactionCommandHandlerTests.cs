@@ -68,4 +68,52 @@ public class DeleteTransactionCommandHandlerTests
         result.Error.Should().Contain("not found", "the error message should clearly indicate the issue");
         repoMock.Verify(r => r.DeleteAsync(It.IsAny<Guid>()), Times.Never, "DeleteAsync must not be called for non-existent transaction");
     }
+
+    /// <summary>
+    /// Test: Handler should return a failure when the transaction ID is empty.
+    /// Validates input guard clause in the command.
+    /// </summary>
+    [Fact]
+    public async Task HandleAsync_ShouldReturnFailure_WhenTransactionIdIsEmpty()
+    {
+        // Arrange
+        var repoMock = new Mock<ITransactionRepository>();
+        var handler = new DeleteTransactionCommandHandler(repoMock.Object);
+
+        var command = new DeleteTransactionCommand { Id = Guid.Empty }; // Invalid ID
+
+        // Act
+        var result = await handler.HandleAsync(command);
+
+        // Assert
+        result.IsFailure.Should().BeTrue("empty transaction ID is invalid");
+        result.Error.Should().Contain("cannot be empty", "the error message should mention the invalid ID");
+        repoMock.Verify(r => r.GetByIdAsync(It.IsAny<Guid>()), Times.Never, "repository should not be called on invalid input");
+    }
+
+    /// <summary>
+    /// Test: Handler should return a generic failure result when the repository throws an unexpected exception.
+    /// This verifies that:
+    /// - Exceptions from the repository are caught safely
+    /// - The handler does not leak internal exception details
+    /// - A generic, user-safe error message is returned
+    /// </summary>
+    [Fact]
+    public async Task HandleAsync_ShouldReturnFailure_WhenRepositoryThrowsException()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var repoMock = new Mock<ITransactionRepository>();
+        repoMock.Setup(r => r.GetByIdAsync(id)).ThrowsAsync(new Exception("DB unreachable"));
+
+        var handler = new DeleteTransactionCommandHandler(repoMock.Object);
+        var command = new DeleteTransactionCommand { Id = id };
+
+        // Act
+        var result = await handler.HandleAsync(command);
+
+        // Assert
+        result.IsFailure.Should().BeTrue("exceptions should be caught and converted to failure");
+        result.Error.Should().Be("An unexpected error occurred while deleting the transaction.");
+    }
 }

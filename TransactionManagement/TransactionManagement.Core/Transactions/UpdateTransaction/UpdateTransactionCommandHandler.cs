@@ -1,6 +1,5 @@
 ﻿using Shared.Mediator;
 using SubscriptionTracker.Shared.Results;
-using TransactionManagement.Core.Transactions;
 
 namespace TransactionManagement.Core.Transactions.UpdateTransaction;
 
@@ -37,7 +36,12 @@ public class UpdateTransactionCommandHandler : IRequestHandler<UpdateTransaction
         }
         catch (Exception ex)
         {
-            return Result<Transaction>.Failure($"Failed to update transaction: {ex.Message}");
+            // Log the detailed error internally for developers
+            // (e.g., using Serilog, NLog, etc.)
+            Console.Error.WriteLine(ex); // Placeholder
+
+            // Return a generic, user-safe error message
+            return Result<Transaction>.Failure("An unexpected error occurred while updating the transaction.");
         }
     }
 }
